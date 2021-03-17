@@ -1,17 +1,56 @@
 using Billing.Api.Controllers;
+using Billing.Api.Data;
+using Billing.Api.Data.Repository;
 using Billing.Api.Models.ApiModels;
-using Billing.Tests.MockClasses;
 using Microsoft.AspNetCore.Mvc;
+using Moq;
 using Xunit;
 
 namespace Billing.Tests
 {
     public class TestOrders
     {
+        private (IUserRepository, IOrderRepository) GetMockObjects()
+        {
+            var userMock = new Mock<IUserRepository>();
+            userMock.Setup(u => u.Get(It.IsAny<int>())).Returns<int>(id =>
+            {
+                if (id == 1)
+                {
+                    return new User
+                    {
+                        Id = 1,
+                        UserName = "test"
+                    };
+                }
+
+                return null;
+            });
+
+            var orderMock = new Mock<IOrderRepository>();
+            orderMock.Setup(o => o.GetOrder(It.IsAny<string>())).Returns<string>(s =>
+            {
+                if (s == "1")
+                {
+                    return new Order
+                    {
+                        Amount = 100.0M,
+                        OrderNumber = "1",
+                        Id = 1
+                    };
+                }
+
+                return null;
+            });
+
+            return (userMock.Object, orderMock.Object);
+        }
+
         [Fact(DisplayName = "Check error for wrong order number")]
         public void TestOrderProcessing_EmptyOrderNumber()
         {
-            var orderController = new OrderController(new OrderRepositoryMock(), new UserRepositoryMock());
+            (IUserRepository userMock, IOrderRepository orderMock) = GetMockObjects();
+            var orderController = new OrderController(orderMock, userMock);
             var processOrderIn = new ProcessOrderIn()
             {
                 Description = string.Empty,
@@ -35,7 +74,8 @@ namespace Billing.Tests
         [Fact(DisplayName = "Check error for not existing order")]
         public void TestOrderProcessing_NotExistingOrderNumber()
         {
-            var orderController = new OrderController(new OrderRepositoryMock(), new UserRepositoryMock());
+            (IUserRepository userMock, IOrderRepository orderMock) = GetMockObjects();
+            var orderController = new OrderController(orderMock, userMock);
             var processOrderIn = new ProcessOrderIn()
             {
                 Description = string.Empty,
@@ -59,7 +99,8 @@ namespace Billing.Tests
         [Fact(DisplayName = "Check error for wrong order amount")]
         public void TestOrderProcessing_WrongOrderAmount()
         {
-            var orderController = new OrderController(new OrderRepositoryMock(), new UserRepositoryMock());
+            (IUserRepository userMock, IOrderRepository orderMock) = GetMockObjects();
+            var orderController = new OrderController(orderMock, userMock);
             var processOrderIn = new ProcessOrderIn()
             {
                 Description = string.Empty,
@@ -83,7 +124,8 @@ namespace Billing.Tests
         [Fact(DisplayName = "Check error for non existing user")]
         public void TestOrderProcessing_NotExistingUser()
         {
-            var orderController = new OrderController(new OrderRepositoryMock(), new UserRepositoryMock());
+            (IUserRepository userMock, IOrderRepository orderMock) = GetMockObjects();
+            var orderController = new OrderController(orderMock, userMock);
             var processOrderIn = new ProcessOrderIn()
             {
                 Description = string.Empty,
@@ -107,7 +149,8 @@ namespace Billing.Tests
         [Fact(DisplayName = "Check error for non existing payment gateway")]
         public void TestOrderProcessing_NotExistingGateway()
         {
-            var orderController = new OrderController(new OrderRepositoryMock(), new UserRepositoryMock());
+            (IUserRepository userMock, IOrderRepository orderMock) = GetMockObjects();
+            var orderController = new OrderController(orderMock, userMock);
             var processOrderIn = new ProcessOrderIn()
             {
                 Description = string.Empty,
@@ -131,7 +174,8 @@ namespace Billing.Tests
         [Fact(DisplayName = "Check order billing processed and billing done")]
         public void TestOrderProcessing_OrderBillingDone()
         {
-            var orderController = new OrderController(new OrderRepositoryMock(), new UserRepositoryMock());
+            (IUserRepository userMock, IOrderRepository orderMock) = GetMockObjects();
+            var orderController = new OrderController(orderMock, userMock);
             var processOrderIn = new ProcessOrderIn()
             {
                 Description = string.Empty,
